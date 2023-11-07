@@ -9,7 +9,7 @@ namespace Base {
         int key_size;
     public:
         virtual int get_key_size() = 0;
-        virtual void serialize(const char* password, std::ostream) = 0;
+        virtual void serialize(std::ostream) = 0;
     };
 
     class PublicKey : virtual Key
@@ -25,5 +25,6 @@ namespace Base {
         virtual PublicKey gen_public_key() = 0;
         virtual void decrypt(const std::istream, std::ostream) = 0;
         virtual void sign(const std::istream, std::ostream) = 0;
+        virtual void serialize(const std::string password, std::ostream) = 0;
     };
 }
