@@ -35,4 +35,11 @@ namespace Base {
         virtual void encrypt(std::ostream, const std::istream, const std::vector<uint8_t> iv) = 0;
         virtual void decrypt(std::ostream, const std::istream, const std::vector<uint8_t> iv) = 0;
     };
+
+    class AsymmetricKeyFactory
+    {
+    public:
+        virtual PrivateKey create_private_key() = 0;
+        virtual PublicKey create_public_key(PrivateKey) = 0;
+    };
 }
