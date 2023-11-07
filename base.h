@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 namespace Base {
     class Key
@@ -15,16 +16,23 @@ namespace Base {
     class PublicKey : virtual Key
     {
     public:
-        virtual void encrypt(const std::istream, std::ostream) = 0;
-        virtual void verify(const std::istream, std::ostream) = 0;
+        virtual void encrypt(std::ostream, const std::istream) = 0;
+        virtual void verify(std::ostream, const std::istream) = 0;
     };
 
     class PrivateKey : virtual Key
     {
     public:
         virtual PublicKey gen_public_key() = 0;
-        virtual void decrypt(const std::istream, std::ostream) = 0;
-        virtual void sign(const std::istream, std::ostream) = 0;
-        virtual void serialize(const std::string password, std::ostream) = 0;
+        virtual void decrypt(std::ostream, const std::istream) = 0;
+        virtual void sign(std::ostream, const std::istream) = 0;
+        virtual void serialize(std::ostream, const std::string password) = 0;
+    };
+
+    class SymmetricKey : virtual Key
+    {
+    public:
+        virtual void encrypt(std::ostream, const std::istream, const std::vector<uint8_t> iv) = 0;
+        virtual void decrypt(std::ostream, const std::istream, const std::vector<uint8_t> iv) = 0;
     };
 }
