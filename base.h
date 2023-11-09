@@ -6,40 +6,53 @@
 namespace Base {
     class Key
     {
-    protected:
-        int key_size;
     public:
-        virtual int get_key_size() = 0;
-        virtual void serialize(std::ostream) = 0;
+        virtual int get_key_size() const = 0;
+        virtual void serialize(std::ostream) const = 0;
     };
 
     class PublicKey : virtual Key
     {
     public:
-        virtual void encrypt(std::ostream, const std::istream) = 0;
-        virtual void verify(std::ostream, const std::istream) = 0;
+        virtual void encrypt(std::ostream&, const std::istream&) const = 0;
+        virtual void verify(std::ostream&, const std::istream&) const = 0;
     };
 
     class PrivateKey : virtual Key
     {
     public:
-        virtual PublicKey gen_public_key() = 0;
-        virtual void decrypt(std::ostream, const std::istream) = 0;
-        virtual void sign(std::ostream, const std::istream) = 0;
-        virtual void serialize(std::ostream, const std::string password) = 0;
+        virtual std::unique_ptr<PublicKey> gen_public_key() const = 0;
+        virtual void decrypt(std::ostream&, const std::istream&) const = 0;
+        virtual void sign(std::ostream&, const std::istream&) const = 0;
+        virtual void serialize(std::ostream&, const std::string& password) const = 0;
     };
 
     class SymmetricKey : virtual Key
     {
     public:
-        virtual void encrypt(std::ostream, const std::istream, const std::vector<uint8_t> iv) = 0;
-        virtual void decrypt(std::ostream, const std::istream, const std::vector<uint8_t> iv) = 0;
+        virtual void encrypt(std::ostream&, const std::istream&, const std::vector<uint8_t>* iv = nullptr) const = 0;
+        virtual void decrypt(std::ostream&, const std::istream&, const std::vector<uint8_t>* iv = nullptr) const = 0;
     };
 
     class AsymmetricKeyFactory
     {
     public:
-        virtual PrivateKey create_private_key() = 0;
-        virtual PublicKey create_public_key(PrivateKey) = 0;
+        virtual std::unique_ptr<PrivateKey> load_private_key(const std::istream&) const = 0;
+
+        virtual std::unique_ptr<PrivateKey> load_private_key(
+            const std::istream&,
+            const std::string& password
+        ) const = 0;
+
+        virtual std::unique_ptr<PrivateKey> generate_private_key(
+            int key_size,
+            const std::vector<uint8_t>* seed = nullptr
+        ) const = 0;
+
+        virtual std::unique_ptr<PublicKey> load_public_key(const std::istream&) const = 0;
+        virtual std::unique_ptr<PublicKey> create_public_key(const PrivateKey* private_key) const
+        {
+            return private_key->gen_public_key();
+        };
     };
 }
