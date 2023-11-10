@@ -23,5 +23,8 @@
     <ClInclude Include="base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="rsa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
