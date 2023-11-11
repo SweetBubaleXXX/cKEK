@@ -1,6 +1,5 @@
 #pragma once
 
-#include "base.h"
 #include <pem.h>
 #include <files.h>
 #include <osrng.h>
@@ -8,11 +7,11 @@
 #include <aes.h>
 #include <sha.cpp>
 #include <pssr.h>
+#include "base.h"
 
 namespace Rsa {
-    class PublicKey : virtual Base::PublicKey
+    class PublicKey : virtual public Base::PublicKey
     {
-        CryptoPP::RSA::PublicKey key;
     public:
         PublicKey(CryptoPP::RSA::PublicKey rsa_key) : key(rsa_key) {}
 
@@ -58,19 +57,12 @@ namespace Rsa {
             verification_filter.MessageEnd();
             return !!result;
         }
+    private:
+        CryptoPP::RSA::PublicKey key;
     };
 
-    class PrivateKey : virtual Base::PrivateKey
+    class PrivateKey : virtual public Base::PrivateKey
     {
-        CryptoPP::RSA::PrivateKey key;
-        PrivateKey(CryptoPP::RSA::PrivateKey rsa_key) : key(rsa_key) {}
-
-        static PrivateKey* generate(CryptoPP::RandomNumberGenerator& rng, unsigned int key_size)
-        {
-            CryptoPP::RSA::PrivateKey rsa_key;
-            rsa_key.GenerateRandomWithKeySize(rng, key_size);
-            return new PrivateKey(rsa_key);
-        }
     public:
         PrivateKey(std::istream& serialized_key)
         {
@@ -81,7 +73,7 @@ namespace Rsa {
         static std::unique_ptr<PrivateKey> generate(unsigned int key_size)
         {
             CryptoPP::AutoSeededRandomPool rng;
-            return std::make_unique<PrivateKey>(PrivateKey::generate(rng, key_size));
+            return std::unique_ptr<PrivateKey>(PrivateKey::generate(rng, key_size));
         }
 
         static std::unique_ptr<PrivateKey> generate(unsigned int key_size, const std::vector<uint8_t>& seed)
@@ -90,7 +82,7 @@ namespace Rsa {
                 throw std::runtime_error("Invalid seed size");
             CryptoPP::OFB_Mode<CryptoPP::AES>::Encryption rng;
             rng.SetKeyWithIV(seed.data(), seed.size(), seed.data(), seed.size());
-            return std::make_unique<PrivateKey>(PrivateKey::generate(rng, key_size));
+            return std::unique_ptr<PrivateKey>(PrivateKey::generate(rng, key_size));
         }
 
         unsigned int get_key_size() const override
@@ -114,7 +106,7 @@ namespace Rsa {
         std::unique_ptr<Base::PublicKey> generate_public_key() const override
         {
             CryptoPP::RSA::PublicKey rsa_public_key(key);
-            return std::make_unique<Base::PublicKey>(new PublicKey(rsa_public_key));
+            return std::unique_ptr<Base::PublicKey>(new PublicKey(rsa_public_key));
         }
 
         void decrypt(std::ostream& output_stream, std::istream& input_stream) const override
@@ -137,6 +129,16 @@ namespace Rsa {
                     new CryptoPP::FileSink(output_stream)
                 )
             );
+        }
+    private:
+        CryptoPP::RSA::PrivateKey key;
+        PrivateKey(CryptoPP::RSA::PrivateKey rsa_key) : key(rsa_key) {}
+
+        static PrivateKey* generate(CryptoPP::RandomNumberGenerator& rng, unsigned int key_size)
+        {
+            CryptoPP::RSA::PrivateKey rsa_key;
+            rsa_key.GenerateRandomWithKeySize(rng, key_size);
+            return new PrivateKey(rsa_key);
         }
     };
 }
