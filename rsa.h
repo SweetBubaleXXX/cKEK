@@ -13,7 +13,7 @@ namespace Rsa {
     class PublicKey : virtual public Base::PublicKey
     {
     public:
-        PublicKey(CryptoPP::RSA::PublicKey rsa_key) : key(rsa_key) {}
+        friend class PrivateKey;
 
         PublicKey(std::istream& serialized_key)
         {
@@ -59,6 +59,8 @@ namespace Rsa {
         }
     private:
         CryptoPP::RSA::PublicKey key;
+
+        PublicKey(CryptoPP::RSA::PublicKey rsa_key) : key(rsa_key) {}
     };
 
     class PrivateKey : virtual public Base::PrivateKey
@@ -70,19 +72,19 @@ namespace Rsa {
             CryptoPP::PEM_Load(stream, key);
         }
 
-        static std::unique_ptr<PrivateKey> generate(unsigned int key_size)
+        static PrivateKey* generate(unsigned int key_size)
         {
             CryptoPP::AutoSeededRandomPool rng;
-            return std::unique_ptr<PrivateKey>(PrivateKey::generate(rng, key_size));
+            return PrivateKey::generate(rng, key_size);
         }
 
-        static std::unique_ptr<PrivateKey> generate(unsigned int key_size, const std::vector<uint8_t>& seed)
+        static PrivateKey* generate(unsigned int key_size, const std::vector<uint8_t>& seed)
         {
             if (seed.size() != CryptoPP::AES::BLOCKSIZE)
                 throw std::runtime_error("Invalid seed size");
             CryptoPP::OFB_Mode<CryptoPP::AES>::Encryption rng;
             rng.SetKeyWithIV(seed.data(), seed.size(), seed.data(), seed.size());
-            return std::unique_ptr<PrivateKey>(PrivateKey::generate(rng, key_size));
+            return PrivateKey::generate(rng, key_size);
         }
 
         unsigned int get_key_size() const override
@@ -103,10 +105,10 @@ namespace Rsa {
             CryptoPP::PEM_Save(stream_sink, key, rng, "AES-256-CBC", password.c_str(), password.length());
         }
 
-        std::unique_ptr<Base::PublicKey> generate_public_key() const override
+        Base::PublicKey* generate_public_key() const override
         {
             CryptoPP::RSA::PublicKey rsa_public_key(key);
-            return std::unique_ptr<Base::PublicKey>(new PublicKey(rsa_public_key));
+            return new PublicKey(rsa_public_key);
         }
 
         void decrypt(std::ostream& output_stream, std::istream& input_stream) const override
@@ -132,6 +134,7 @@ namespace Rsa {
         }
     private:
         CryptoPP::RSA::PrivateKey key;
+
         PrivateKey(CryptoPP::RSA::PrivateKey rsa_key) : key(rsa_key) {}
 
         static PrivateKey* generate(CryptoPP::RandomNumberGenerator& rng, unsigned int key_size)

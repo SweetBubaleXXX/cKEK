@@ -21,7 +21,7 @@ namespace Base {
     class PrivateKey : virtual public Key
     {
     public:
-        virtual std::unique_ptr<PublicKey> generate_public_key() const = 0;
+        virtual PublicKey* generate_public_key() const = 0;
         virtual void decrypt(std::ostream&, std::istream&) const = 0;
         virtual void sign(std::ostream&, std::istream&) const = 0;
         virtual void serialize(std::ostream&, const std::string& password) const = 0;
@@ -37,16 +37,16 @@ namespace Base {
     class AsymmetricKeyFactory
     {
     public:
-        virtual std::unique_ptr<PrivateKey> load_private_key(std::istream&) const = 0;
-        virtual std::unique_ptr<PrivateKey> load_private_key(std::istream&, std::string& password) const = 0;
+        virtual PrivateKey* load_private_key(std::istream&) const = 0;
+        virtual PrivateKey* load_private_key(std::istream&, std::string& password) const = 0;
 
-        virtual std::unique_ptr<PrivateKey> generate_private_key(
+        virtual PrivateKey* generate_private_key(
             unsigned int key_size,
             const std::vector<uint8_t>* seed = nullptr
         ) const = 0;
 
-        virtual std::unique_ptr<PublicKey> load_public_key(std::istream&) const = 0;
-        virtual std::unique_ptr<PublicKey> create_public_key(const PrivateKey* private_key) const
+        virtual PublicKey* load_public_key(std::istream&) const = 0;
+        virtual PublicKey* create_public_key(const PrivateKey* private_key) const
         {
             return private_key->generate_public_key();
         };
