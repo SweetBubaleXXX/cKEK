@@ -5,7 +5,6 @@
 #include <osrng.h>
 #include <modes.h>
 #include <aes.h>
-#include <sha.cpp>
 #include <pssr.h>
 #include "base.h"
 
