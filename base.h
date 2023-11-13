@@ -7,6 +7,7 @@ namespace Base {
     class Key
     {
     public:
+        virtual ~Key() = default;
         virtual unsigned int get_key_size() const = 0;
         virtual void serialize(std::ostream&) const = 0;
     };
