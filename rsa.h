@@ -9,6 +9,8 @@
 #include "base.h"
 
 namespace Rsa {
+    const std::string KEY_ENCRYPTION_ALGORITHM = "AES-256-CBC";
+
     class PublicKey : virtual public Base::PublicKey
     {
     public:
@@ -107,7 +109,7 @@ namespace Rsa {
         {
             CryptoPP::AutoSeededRandomPool rng;
             CryptoPP::FileSink stream_sink(output_stream);
-            CryptoPP::PEM_Save(stream_sink, key, rng, "AES-256-CBC", password.c_str(), password.length());
+            CryptoPP::PEM_Save(stream_sink, key, rng, KEY_ENCRYPTION_ALGORITHM, password.c_str(), password.length());
         }
 
         Base::PublicKey* generate_public_key() const override

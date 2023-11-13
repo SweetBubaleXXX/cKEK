@@ -46,11 +46,7 @@ namespace Aes
         {
             CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
             set_iv(encryptor, iv);
-            CryptoPP::FileSource stream(input_stream, true,
-                new CryptoPP::StreamTransformationFilter(encryptor,
-                    new CryptoPP::FileSink(output_stream)
-                )
-            );
+            process_stream(output_stream, input_stream, encryptor);
         }
 
         void decrypt(
@@ -61,17 +57,26 @@ namespace Aes
         {
             CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption decryptor;
             set_iv(decryptor, iv);
-            CryptoPP::FileSource stream(input_stream, true,
-                new CryptoPP::StreamTransformationFilter(decryptor,
-                    new CryptoPP::FileSink(output_stream)
-                )
-            );
+            process_stream(output_stream, input_stream, decryptor);
         }
 
     private:
         CryptoPP::SecByteBlock key;
 
         CbcModeKey(CryptoPP::SecByteBlock key_block) : key(key_block) {}
+
+        void process_stream(
+            std::ostream& output_stream,
+            std::istream& input_stream,
+            CryptoPP::CBC_ModeBase& encryptor
+        ) const
+        {
+            CryptoPP::FileSource stream(input_stream, true,
+                new CryptoPP::StreamTransformationFilter(encryptor,
+                    new CryptoPP::FileSink(output_stream)
+                )
+            );
+        }
 
         void set_iv(CryptoPP::CBC_ModeBase& encryptor, const std::vector<uint8_t>* iv) const
         {
