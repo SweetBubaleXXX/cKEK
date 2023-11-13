@@ -2,6 +2,7 @@
 #include <osrng.h>
 #include <modes.h>
 #include <aes.h>
+#include <hex.h>
 #include "base.h"
 
 namespace Aes
@@ -11,6 +12,12 @@ namespace Aes
     class CbcModeKey : public Base::SymmetricKey
     {
     public:
+        CbcModeKey(const std::vector<uint8_t>& key)
+        {
+            CryptoPP::SecByteBlock key_block(reinterpret_cast<const CryptoPP::byte*>(key.data()), key.size());
+            this->key = key_block;
+        }
+
         static CbcModeKey* generate(unsigned int key_size = DEFAULT_KEY_SIZE)
         {
             CryptoPP::AutoSeededRandomPool rng;
@@ -26,7 +33,9 @@ namespace Aes
 
         void serialize(std::ostream& output_stream) const
         {
-            output_stream << key;
+            CryptoPP::HexEncoder encoder(new CryptoPP::FileSink(output_stream));
+            encoder.Put(key, key.size());
+            encoder.MessageEnd();
         }
 
         void encrypt(
@@ -36,7 +45,7 @@ namespace Aes
         ) const
         {
             CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
-            set_iv(&encryptor, iv);
+            set_iv(encryptor, iv);
             CryptoPP::FileSource stream(input_stream, true,
                 new CryptoPP::StreamTransformationFilter(encryptor,
                     new CryptoPP::FileSink(output_stream)
@@ -51,7 +60,7 @@ namespace Aes
         ) const
         {
             CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption decryptor;
-            set_iv(&decryptor, iv);
+            set_iv(decryptor, iv);
             CryptoPP::FileSource stream(input_stream, true,
                 new CryptoPP::StreamTransformationFilter(decryptor,
                     new CryptoPP::FileSink(output_stream)
@@ -64,12 +73,12 @@ namespace Aes
 
         CbcModeKey(CryptoPP::SecByteBlock key_block) : key(key_block) {}
 
-        void set_iv(CryptoPP::CBC_ModeBase* encryptor, const std::vector<uint8_t>* iv) const
+        void set_iv(CryptoPP::CBC_ModeBase& encryptor, const std::vector<uint8_t>* iv) const
         {
             if (iv)
-                encryptor->SetKeyWithIV(key, key.size(), iv->data(), iv->size());
+                encryptor.SetKeyWithIV(key, key.size(), iv->data(), iv->size());
             else
-                encryptor->SetKey(key, key.size());
+                encryptor.SetKey(key, key.size());
         }
     };
-}
+};
