@@ -71,6 +71,12 @@ namespace Rsa {
             CryptoPP::PEM_Load(stream, key);
         }
 
+        PrivateKey(std::istream& serialized_key, std::string& password)
+        {
+            CryptoPP::FileSource stream(serialized_key, true);
+            CryptoPP::PEM_Load(stream, key, password.c_str(), password.length());
+        }
+
         static PrivateKey* generate(unsigned int key_size)
         {
             CryptoPP::AutoSeededRandomPool rng;
@@ -141,6 +147,35 @@ namespace Rsa {
             CryptoPP::RSA::PrivateKey rsa_key;
             rsa_key.GenerateRandomWithKeySize(rng, key_size);
             return new PrivateKey(rsa_key);
+        }
+    };
+
+    class KeyFactory : public Base::AsymmetricKeyFactory
+    {
+    public:
+        PrivateKey* load_private_key(std::istream& serialized_key) const
+        {
+            return new PrivateKey(serialized_key);
+        }
+
+        PrivateKey* load_private_key(std::istream& serialized_key, std::string& password) const
+        {
+            return new PrivateKey(serialized_key, password);
+        }
+
+        PrivateKey* generate_private_key(
+            unsigned int key_size,
+            const std::vector<uint8_t>* seed = nullptr
+        ) const
+        {
+            if (seed)
+                return PrivateKey::generate(key_size, *seed);
+            return PrivateKey::generate(key_size);
+        }
+
+        PublicKey* load_public_key(std::istream& serialized_key) const
+        {
+            return new PublicKey(serialized_key);
         }
     };
 }
