@@ -26,6 +26,7 @@ namespace Base {
         virtual void decrypt(std::ostream&, std::istream&) const = 0;
         virtual void sign(std::ostream&, std::istream&) const = 0;
         virtual void serialize(std::ostream&, const std::string& password) const = 0;
+        using Key::serialize;
     };
 
     class SymmetricKey : virtual public Key

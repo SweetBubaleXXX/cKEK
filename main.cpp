@@ -34,6 +34,9 @@ int main(int argc, char* argv[])
     key->serialize(std::cout);
 
     Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKey> kek_factory;
+    std::unique_ptr<Base::PrivateKey> kek_key(kek_factory.generate_private_key(1024));
+    kek_key->serialize(std::cout, message);
+    kek_key->serialize(std::cout);
 
     return 0;
 }
