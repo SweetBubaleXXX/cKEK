@@ -44,9 +44,7 @@ namespace Aes
             const std::vector<uint8_t>* iv = nullptr
         ) const
         {
-            CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption encryptor;
-            set_iv(encryptor, iv);
-            process_stream(output_stream, input_stream, encryptor);
+            process_stream<CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption>(output_stream, input_stream, iv);
         }
 
         void decrypt(
@@ -55,9 +53,7 @@ namespace Aes
             const std::vector<uint8_t>* iv = nullptr
         ) const
         {
-            CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption decryptor;
-            set_iv(decryptor, iv);
-            process_stream(output_stream, input_stream, decryptor);
+            process_stream<CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption>(output_stream, input_stream, iv);
         }
 
     private:
@@ -65,12 +61,19 @@ namespace Aes
 
         CbcModeKey(CryptoPP::SecByteBlock key_block) : key(key_block) {}
 
+        template <class T>
         void process_stream(
             std::ostream& output_stream,
             std::istream& input_stream,
-            CryptoPP::CBC_ModeBase& encryptor
+            const std::vector<uint8_t>* iv
         ) const
         {
+            static_assert(
+                std::is_base_of<CryptoPP::CBC_ModeBase, T>::value,
+                "T must derive from CryptoPP::CBC_ModeBase"
+                );
+            T encryptor;
+            set_iv(encryptor, iv);
             CryptoPP::FileSource stream(input_stream, true,
                 new CryptoPP::StreamTransformationFilter(encryptor,
                     new CryptoPP::FileSink(output_stream)
