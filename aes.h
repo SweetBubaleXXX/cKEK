@@ -26,12 +26,12 @@ namespace Aes
             return new CbcModeKey(key);
         }
 
-        unsigned int get_key_size() const
+        unsigned int get_key_size() const override
         {
             return static_cast<unsigned int>(key.size() * 8);
         }
 
-        void serialize(std::ostream& output_stream) const
+        void serialize(std::ostream& output_stream) const override
         {
             CryptoPP::HexEncoder encoder(new CryptoPP::FileSink(output_stream));
             encoder.Put(key, key.size());
@@ -42,7 +42,7 @@ namespace Aes
             std::ostream& output_stream,
             std::istream& input_stream,
             const std::vector<uint8_t>* iv = nullptr
-        ) const
+        ) const override
         {
             process_stream<CryptoPP::CBC_Mode<CryptoPP::AES>::Encryption>(output_stream, input_stream, iv);
         }
@@ -51,7 +51,7 @@ namespace Aes
             std::ostream& output_stream,
             std::istream& input_stream,
             const std::vector<uint8_t>* iv = nullptr
-        ) const
+        ) const override
         {
             process_stream<CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption>(output_stream, input_stream, iv);
         }
@@ -61,7 +61,7 @@ namespace Aes
 
         CbcModeKey(CryptoPP::SecByteBlock key_block) : key(key_block) {}
 
-        template <class T>
+        template <class TProcessor>
         void process_stream(
             std::ostream& output_stream,
             std::istream& input_stream,
@@ -69,13 +69,13 @@ namespace Aes
         ) const
         {
             static_assert(
-                std::is_base_of<CryptoPP::CBC_ModeBase, T>::value,
-                "T must derive from CryptoPP::CBC_ModeBase"
+                std::is_base_of<CryptoPP::CBC_ModeBase, TProcessor>::value,
+                "TProcessor must derive from CryptoPP::CBC_ModeBase"
                 );
-            T encryptor;
-            set_iv(encryptor, iv);
+            TProcessor processor;
+            set_iv(processor, iv);
             CryptoPP::FileSource stream(input_stream, true,
-                new CryptoPP::StreamTransformationFilter(encryptor,
+                new CryptoPP::StreamTransformationFilter(processor,
                     new CryptoPP::FileSink(output_stream)
                 )
             );

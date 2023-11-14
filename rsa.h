@@ -129,7 +129,7 @@ namespace Rsa {
             );
         }
 
-        void sign(std::ostream& output_stream, std::istream& input_stream) const
+        void sign(std::ostream& output_stream, std::istream& input_stream) const override
         {
             CryptoPP::AutoSeededRandomPool rng;
             CryptoPP::RSASS<CryptoPP::PSS, CryptoPP::SHA256>::Signer signer(key);
@@ -152,15 +152,15 @@ namespace Rsa {
         }
     };
 
-    class KeyFactory : public Base::AsymmetricKeyFactory
+    class KeyFactory : virtual public Base::AsymmetricKeyFactory
     {
     public:
-        PrivateKey* load_private_key(std::istream& serialized_key) const
+        PrivateKey* load_private_key(std::istream& serialized_key) const override
         {
             return new PrivateKey(serialized_key);
         }
 
-        PrivateKey* load_private_key(std::istream& serialized_key, std::string& password) const
+        PrivateKey* load_private_key(std::istream& serialized_key, std::string& password) const override
         {
             return new PrivateKey(serialized_key, password);
         }
@@ -168,14 +168,14 @@ namespace Rsa {
         PrivateKey* generate_private_key(
             unsigned int key_size,
             const std::vector<uint8_t>* seed = nullptr
-        ) const
+        ) const override
         {
             if (seed)
                 return PrivateKey::generate(key_size, *seed);
             return PrivateKey::generate(key_size);
         }
 
-        PublicKey* load_public_key(std::istream& serialized_key) const
+        PublicKey* load_public_key(std::istream& serialized_key) const override
         {
             return new PublicKey(serialized_key);
         }

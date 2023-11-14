@@ -3,6 +3,7 @@
 #include "aes.h"
 #include "base.h"
 #include "rsa.h"
+#include "kek.h"
 
 int main(int argc, char* argv[])
 {
@@ -17,7 +18,7 @@ int main(int argc, char* argv[])
     private_key->decrypt(std::cout, encrypted_message);
 
     Rsa::KeyFactory factory;
-    Rsa::PrivateKey* new_key = factory.generate_private_key(4096);
+    Rsa::PrivateKey* new_key = factory.generate_private_key(2048);
     std::cout << new_key->get_key_size() << std::endl;
     delete new_key;
 
@@ -31,5 +32,8 @@ int main(int argc, char* argv[])
     key->encrypt(cipher, plain_text, &iv);
     key->decrypt(std::cout, cipher, &iv);
     key->serialize(std::cout);
+
+    Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKey> kek_factory;
+
     return 0;
 }
