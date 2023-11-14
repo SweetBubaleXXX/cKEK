@@ -39,6 +39,7 @@ namespace Base {
     class AsymmetricKeyFactory
     {
     public:
+        virtual PublicKey* load_public_key(std::istream&) const = 0;
         virtual PrivateKey* load_private_key(std::istream&) const = 0;
         virtual PrivateKey* load_private_key(std::istream&, std::string& password) const = 0;
 
@@ -46,11 +47,5 @@ namespace Base {
             unsigned int key_size,
             const std::vector<uint8_t>* seed = nullptr
         ) const = 0;
-
-        virtual PublicKey* load_public_key(std::istream&) const = 0;
-        virtual PublicKey* create_public_key(const PrivateKey* private_key) const
-        {
-            return private_key->generate_public_key();
-        };
     };
 }

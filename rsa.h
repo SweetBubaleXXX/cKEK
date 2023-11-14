@@ -155,6 +155,11 @@ namespace Rsa {
     class KeyFactory : virtual public Base::AsymmetricKeyFactory
     {
     public:
+        PublicKey* load_public_key(std::istream& serialized_key) const override
+        {
+            return new PublicKey(serialized_key);
+        }
+
         PrivateKey* load_private_key(std::istream& serialized_key) const override
         {
             return new PrivateKey(serialized_key);
@@ -173,11 +178,6 @@ namespace Rsa {
             if (seed)
                 return PrivateKey::generate(key_size, *seed);
             return PrivateKey::generate(key_size);
-        }
-
-        PublicKey* load_public_key(std::istream& serialized_key) const override
-        {
-            return new PublicKey(serialized_key);
         }
     };
 }

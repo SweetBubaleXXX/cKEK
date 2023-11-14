@@ -18,9 +18,10 @@ namespace Kek
     {
         CHECK_BASE_CLASS;
     public:
-        PublicKey(std::istream& serialized_key) : key(key_factory.load_public_key(serialized_key)) { }
+        template <class TAsymmetricKeyFactory, class TSymmetricKey>
+        friend class PrivateKey;
 
-        PublicKey(const Base::PrivateKey* private_key) : key(private_key->generate_public_key()) { }
+        PublicKey(std::istream& serialized_key) : key(key_factory.load_public_key(serialized_key)) { }
 
         unsigned int get_key_size() const override
         {
@@ -44,6 +45,8 @@ namespace Kek
     private:
         TAsymmetricKeyFactory key_factory;
         std::unique_ptr<Base::PublicKey> key;
+
+        PublicKey(const std::unique_ptr<Base::PrivateKey>& private_key) : key(private_key->generate_public_key()) { }
     };
 
     template <class TAsymmetricKeyFactory, class TSymmetricKey>
@@ -79,7 +82,7 @@ namespace Kek
 
         PublicKey<TAsymmetricKeyFactory, TSymmetricKey>* generate_public_key() const override
         {
-            return new PublicKey<TAsymmetricKeyFactory, TSymmetricKey>(key.get());
+            return new PublicKey<TAsymmetricKeyFactory, TSymmetricKey>(key);
         }
 
         void decrypt(std::ostream& output_stream, std::istream& input_stream) const override
@@ -103,6 +106,11 @@ namespace Kek
     {
         CHECK_BASE_CLASS;
     public:
+        PublicKey<TAsymmetricKeyFactory, TSymmetricKey>* load_public_key(std::istream& serialized_key) const override
+        {
+            return new PublicKey<TAsymmetricKeyFactory, TSymmetricKey>(serialized_key);
+        }
+
         PrivateKey<TAsymmetricKeyFactory, TSymmetricKey>* load_private_key(std::istream& serialized_key) const override
         {
             return new PrivateKey<TAsymmetricKeyFactory, TSymmetricKey>(serialized_key);
@@ -119,11 +127,6 @@ namespace Kek
         ) const override
         {
             return PrivateKey<TAsymmetricKeyFactory, TSymmetricKey>::generate(key_size, seed);
-        }
-
-        PublicKey<TAsymmetricKeyFactory, TSymmetricKey>* load_public_key(std::istream& serialized_key) const override
-        {
-            return new PublicKey<TAsymmetricKeyFactory, TSymmetricKey>(serialized_key);
         }
     };
 }
