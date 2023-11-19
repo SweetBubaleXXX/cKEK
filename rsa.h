@@ -61,7 +61,9 @@ namespace Rsa {
     private:
         CryptoPP::RSA::PublicKey key;
 
-        PublicKey(CryptoPP::RSA::PublicKey rsa_key) : key(rsa_key) {}
+        PublicKey(CryptoPP::RSA::PublicKey rsa_key) :
+            key(rsa_key)
+        {}
     };
 
     class PrivateKey : virtual public Base::PrivateKey

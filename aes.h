@@ -59,7 +59,9 @@ namespace Aes
     private:
         CryptoPP::SecByteBlock key;
 
-        CbcModeKey(CryptoPP::SecByteBlock key_block) : key(key_block) {}
+        CbcModeKey(CryptoPP::SecByteBlock key_block) :
+            key(key_block)
+        {}
 
         template <class TProcessor>
         void process_stream(

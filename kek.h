@@ -3,7 +3,7 @@
 #include "sha.h"
 #include "base.h"
 
-#define CHECK_BASE_CLASS static_assert(\
+#define CHECK_TEMPLATE_CLASSES static_assert(\
     std::is_base_of<Base::AsymmetricKeyFactory, TAsymmetricKeyFactory>::value,\
     "TAsymmetricKeyFactory must derive from Base::AsymmetricKeyFactory"\
     );\
@@ -20,7 +20,7 @@ namespace Kek
     template <class TAsymmetricKeyFactory, class TSymmetricKey>
     class PublicKey : virtual public Base::PublicKey
     {
-        CHECK_BASE_CLASS;
+        CHECK_TEMPLATE_CLASSES;
     public:
         template <class TAsymmetricKeyFactory, class TSymmetricKey>
         friend class PrivateKey;
@@ -46,7 +46,7 @@ namespace Kek
             std::string hexadecimal_key_id;
             char buffer[KEY_ID_LENGTH];
             compute_key_id(buffer, KEY_ID_LENGTH);
-            CryptoPP::ArraySource ss(reinterpret_cast<uint8_t*>(buffer), KEY_ID_LENGTH, true,
+            CryptoPP::ArraySource key_id_source(reinterpret_cast<uint8_t*>(buffer), KEY_ID_LENGTH, true,
                 new CryptoPP::HexEncoder(
                     new CryptoPP::StringSink(hexadecimal_key_id)
                 )
@@ -82,7 +82,7 @@ namespace Kek
             serialize(serialized_key);
             std::stringstream digest;
             CryptoPP::SHA256 hash;
-            CryptoPP::FileSource(serialized_key, true,
+            CryptoPP::FileSource hash_source(serialized_key, true,
                 new CryptoPP::HashFilter(hash,
                     new CryptoPP::FileSink(digest)
                 )
@@ -94,7 +94,7 @@ namespace Kek
     template <class TAsymmetricKeyFactory, class TSymmetricKey>
     class PrivateKey : virtual public Base::PrivateKey
     {
-        CHECK_BASE_CLASS;
+        CHECK_TEMPLATE_CLASSES;
     public:
         PrivateKey(std::istream& serialized_key) :
             key(key_factory.load_private_key(serialized_key))
@@ -162,7 +162,7 @@ namespace Kek
     template <class TAsymmetricKeyFactory, class TSymmetricKey>
     class KeyFactory : virtual public Base::AsymmetricKeyFactory
     {
-        CHECK_BASE_CLASS;
+        CHECK_TEMPLATE_CLASSES;
     public:
         PublicKey<TAsymmetricKeyFactory, TSymmetricKey>* load_public_key(std::istream& serialized_key) const override
         {
