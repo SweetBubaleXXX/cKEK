@@ -46,7 +46,7 @@ namespace Kek
         TAsymmetricKeyFactory key_factory;
         std::unique_ptr<Base::PublicKey> key;
 
-        PublicKey(const std::unique_ptr<Base::PrivateKey>& private_key) : key(private_key->generate_public_key()) { }
+        PublicKey(const std::unique_ptr<Base::PrivateKey>& private_key) : key(private_key->get_public_key()) { }
     };
 
     template <class TAsymmetricKeyFactory, class TSymmetricKey>
@@ -80,7 +80,7 @@ namespace Kek
             key->serialize(output_stream, password);
         }
 
-        PublicKey<TAsymmetricKeyFactory, TSymmetricKey>* generate_public_key() const override
+        PublicKey<TAsymmetricKeyFactory, TSymmetricKey>* get_public_key() const override
         {
             return new PublicKey<TAsymmetricKeyFactory, TSymmetricKey>(key);
         }

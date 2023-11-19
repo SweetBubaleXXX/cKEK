@@ -22,7 +22,7 @@ namespace Base {
     class PrivateKey : virtual public Key
     {
     public:
-        virtual PublicKey* generate_public_key() const = 0;
+        virtual PublicKey* get_public_key() const = 0;
         virtual void decrypt(std::ostream&, std::istream&) const = 0;
         virtual void sign(std::ostream&, std::istream&) const = 0;
         virtual void serialize(std::ostream&, const std::string& password) const = 0;

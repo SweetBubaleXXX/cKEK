@@ -112,7 +112,7 @@ namespace Rsa {
             CryptoPP::PEM_Save(stream_sink, key, rng, KEY_ENCRYPTION_ALGORITHM, password.c_str(), password.length());
         }
 
-        PublicKey* generate_public_key() const override
+        PublicKey* get_public_key() const override
         {
             CryptoPP::RSA::PublicKey rsa_public_key(key);
             return new PublicKey(rsa_public_key);
