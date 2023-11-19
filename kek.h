@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sha.h"
 #include "base.h"
 
 #define CHECK_BASE_CLASS static_assert(\
@@ -13,6 +14,9 @@
 
 namespace Kek
 {
+    const uint8_t ALGORITHM_VERSION = 1;
+    const unsigned int KEY_ID_LENGTH = 8;
+
     template <class TAsymmetricKeyFactory, class TSymmetricKey>
     class PublicKey : virtual public Base::PublicKey
     {
@@ -26,6 +30,22 @@ namespace Kek
         unsigned int get_key_size() const override
         {
             return key->get_key_size();
+        }
+
+        void get_key_id(std::ostream& output_stream) const
+        {
+            std::stringstream serialized_key;
+            serialize(serialized_key);
+            std::stringstream digest;
+            CryptoPP::SHA256 hash;
+            CryptoPP::FileSource(serialized_key, true,
+                new CryptoPP::HashFilter(hash,
+                    new CryptoPP::FileSink(digest)
+                )
+            );
+            char buffer[KEY_ID_LENGTH];
+            digest.read(buffer, KEY_ID_LENGTH);
+            output_stream.write(buffer, KEY_ID_LENGTH);
         }
 
         void serialize(std::ostream& output_stream) const override

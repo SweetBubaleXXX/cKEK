@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <filters.h>
 #include "aes.h"
 #include "base.h"
 #include "rsa.h"
@@ -36,7 +37,14 @@ int main(int argc, char* argv[])
     Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKey> kek_factory;
     std::unique_ptr<Base::PrivateKey> kek_key(kek_factory.generate_private_key(1024));
     kek_key->serialize(std::cout, message);
-    kek_key->get_public_key()->serialize(std::cout);
-
+    Kek::PublicKey<Rsa::KeyFactory, Aes::CbcModeKey>* kek_public = kek_factory.generate_private_key(1024)->get_public_key();
+    kek_public->serialize(std::cout);
+    std::stringstream key_id;
+    kek_public->get_key_id(key_id);
+    CryptoPP::FileSource ss(key_id, true,
+        new CryptoPP::HexEncoder(
+            new CryptoPP::FileSink(std::cout)
+        )
+    );
     return 0;
 }
