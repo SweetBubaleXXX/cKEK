@@ -37,14 +37,12 @@ int main(int argc, char* argv[])
     Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKey> kek_factory;
     std::unique_ptr<Base::PrivateKey> kek_key(kek_factory.generate_private_key(1024));
     kek_key->serialize(std::cout, message);
-    Kek::PublicKey<Rsa::KeyFactory, Aes::CbcModeKey>* kek_public = kek_factory.generate_private_key(1024)->get_public_key();
+    Kek::PrivateKey<Rsa::KeyFactory, Aes::CbcModeKey>* kek_private = kek_factory.generate_private_key(1024);
+    Kek::PublicKey<Rsa::KeyFactory, Aes::CbcModeKey>* kek_public = kek_private->get_public_key();
     kek_public->serialize(std::cout);
     std::stringstream key_id;
-    kek_public->get_key_id(key_id);
-    CryptoPP::FileSource ss(key_id, true,
-        new CryptoPP::HexEncoder(
-            new CryptoPP::FileSink(std::cout)
-        )
-    );
+    std::cout << kek_private->get_key_id() << std::endl;
+    std::string hex_id = kek_public->get_key_id();
+    std::cout << hex_id << std::endl;
     return 0;
 }
