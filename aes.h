@@ -41,9 +41,7 @@ namespace Aes
 
         void serialize(std::ostream& output_stream) const override
         {
-            CryptoPP::HexEncoder encoder(new CryptoPP::FileSink(output_stream));
-            encoder.Put(key, key.size());
-            encoder.MessageEnd();
+            output_stream.write(reinterpret_cast<const char*>(key.data()), key.size());
         }
 
         void encrypt(
@@ -102,6 +100,7 @@ namespace Aes
     template <unsigned int key_size = DEFAULT_KEY_SIZE>
     class CbcModeKeyFactory : virtual public Base::SymmetricKeyFactory
     {
+    public:
         CbcModeKey* load(std::istream& input_stream) const override
         {
             std::vector<uint8_t> key(key_size);

@@ -62,7 +62,17 @@ namespace Kek
         void encrypt(std::ostream& output_stream, std::istream& input_stream) const override
         {
             output_stream.write(reinterpret_cast<const char*>(&ALGORITHM_VERSION), sizeof(ALGORITHM_VERSION));
+            get_key_id(output_stream);
+            std::unique_ptr<Base::SymmetricKey> symmetric_key(symmetric_key_factory.generate());
+            CryptoPP::AutoSeededRandomPool rng;
+            CryptoPP::SecByteBlock iv_block(symmetric_key->get_iv_size() / 8);
+            rng.GenerateBlock(iv_block, iv_block.size());
+            std::vector<std::uint8_t> iv(iv_block.begin(), iv_block.end());
             std::stringstream metadata;
+            symmetric_key->serialize(metadata);
+            metadata.write(reinterpret_cast<const char*>(iv.data()), iv.size());
+            key->encrypt(output_stream, metadata);
+            symmetric_key->encrypt(output_stream, input_stream, &iv);
         }
 
         bool verify(std::istream& signature, std::istream& message) const override

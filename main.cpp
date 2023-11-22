@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <filters.h>
 #include "aes.h"
@@ -32,7 +33,6 @@ int main(int argc, char* argv[])
 
     key->encrypt(cipher, plain_text, &iv);
     key->decrypt(std::cout, cipher, &iv);
-    key->serialize(std::cout);
 
     Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>> kek_factory;
     std::unique_ptr<Base::PrivateKey> kek_key(kek_factory.generate_private_key(1024));
@@ -44,5 +44,12 @@ int main(int argc, char* argv[])
     std::cout << kek_private->get_key_id() << std::endl;
     std::string hex_id = kek_public->get_key_id();
     std::cout << hex_id << std::endl;
+    std::stringstream text(std::string("Simple message"));
+    std::stringstream output;
+    kek_public->encrypt(output, text);
+    for (char byte : output.str())
+    {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(byte));
+    }
     return 0;
 }
