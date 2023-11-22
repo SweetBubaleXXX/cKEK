@@ -1,3 +1,5 @@
+#pragma once
+
 #include <files.h>
 #include <osrng.h>
 #include <modes.h>
@@ -8,6 +10,7 @@
 namespace Aes
 {
     const unsigned int DEFAULT_KEY_SIZE = CryptoPP::AES::DEFAULT_KEYLENGTH * 8;
+    const unsigned int IV_SIZE = CryptoPP::AES::BLOCKSIZE * 8;
 
     class CbcModeKey : public Base::SymmetricKey
     {
@@ -29,6 +32,11 @@ namespace Aes
         unsigned int get_key_size() const override
         {
             return static_cast<unsigned int>(key.size() * 8);
+        }
+
+        unsigned int get_iv_size() const override
+        {
+            return IV_SIZE;
         }
 
         void serialize(std::ostream& output_stream) const override
@@ -55,7 +63,6 @@ namespace Aes
         {
             process_stream<CryptoPP::CBC_Mode<CryptoPP::AES>::Decryption>(output_stream, input_stream, iv);
         }
-
     private:
         CryptoPP::SecByteBlock key;
 
@@ -89,6 +96,24 @@ namespace Aes
                 encryptor.SetKeyWithIV(key, key.size(), iv->data(), iv->size());
             else
                 encryptor.SetKey(key, key.size());
+        }
+    };
+
+    template <unsigned int key_size = DEFAULT_KEY_SIZE>
+    class CbcModeKeyFactory : virtual public Base::SymmetricKeyFactory
+    {
+        CbcModeKey* load(std::istream& input_stream) const override
+        {
+            std::vector<uint8_t> key(key_size);
+            input_stream.read(reinterpret_cast<char*>(key.data()), key_size);
+            if (input_stream.gcount() != key_size)
+                throw std::exception();
+            return new CbcModeKey(key);
+        }
+
+        CbcModeKey* generate() const override
+        {
+            return CbcModeKey::generate(key_size);
         }
     };
 };

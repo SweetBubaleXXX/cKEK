@@ -34,11 +34,11 @@ int main(int argc, char* argv[])
     key->decrypt(std::cout, cipher, &iv);
     key->serialize(std::cout);
 
-    Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKey> kek_factory;
+    Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>> kek_factory;
     std::unique_ptr<Base::PrivateKey> kek_key(kek_factory.generate_private_key(1024));
     kek_key->serialize(std::cout, message);
-    Kek::PrivateKey<Rsa::KeyFactory, Aes::CbcModeKey>* kek_private = kek_factory.generate_private_key(1024);
-    Kek::PublicKey<Rsa::KeyFactory, Aes::CbcModeKey>* kek_public = kek_private->get_public_key();
+    Kek::PrivateKey<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>>* kek_private = kek_factory.generate_private_key(1024);
+    Kek::PublicKey<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>>* kek_public = kek_private->get_public_key();
     kek_public->serialize(std::cout);
     std::stringstream key_id;
     std::cout << kek_private->get_key_id() << std::endl;

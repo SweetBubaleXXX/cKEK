@@ -12,6 +12,14 @@ namespace Base {
         virtual void serialize(std::ostream&) const = 0;
     };
 
+    class SymmetricKey : virtual public Key
+    {
+    public:
+        virtual unsigned int get_iv_size() const = 0;
+        virtual void encrypt(std::ostream&, std::istream&, const std::vector<uint8_t>* iv = nullptr) const = 0;
+        virtual void decrypt(std::ostream&, std::istream&, const std::vector<uint8_t>* iv = nullptr) const = 0;
+    };
+
     class PublicKey : virtual public Key
     {
     public:
@@ -29,11 +37,11 @@ namespace Base {
         using Key::serialize;
     };
 
-    class SymmetricKey : virtual public Key
+    class SymmetricKeyFactory
     {
     public:
-        virtual void encrypt(std::ostream&, std::istream&, const std::vector<uint8_t>* iv = nullptr) const = 0;
-        virtual void decrypt(std::ostream&, std::istream&, const std::vector<uint8_t>* iv = nullptr) const = 0;
+        virtual SymmetricKey* load(std::istream&) const = 0;
+        virtual SymmetricKey* generate() const = 0;
     };
 
     class AsymmetricKeyFactory
