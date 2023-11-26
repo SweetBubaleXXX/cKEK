@@ -103,10 +103,11 @@ namespace Aes
     public:
         CbcModeKey* load(std::istream& input_stream) const override
         {
-            std::vector<uint8_t> key(key_size);
-            input_stream.read(reinterpret_cast<char*>(key.data()), key_size);
-            if (input_stream.gcount() != key_size)
+            std::array<uint8_t, key_size / 8> key_buffer;
+            input_stream.read(reinterpret_cast<char*>(key_buffer.data()), key_buffer.size());
+            if (input_stream.gcount() != key_size / 8)
                 throw std::exception();
+            std::vector<uint8_t> key(key_buffer.begin(), key_buffer.end());
             return new CbcModeKey(key);
         }
 

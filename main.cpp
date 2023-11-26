@@ -51,5 +51,9 @@ int main(int argc, char* argv[])
     {
         std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(byte));
     }
+    output.clear();
+    output.seekg(0, std::ios::beg);
+    std::cout << std::endl;
+    kek_private->decrypt(std::cout, output);
     return 0;
 }

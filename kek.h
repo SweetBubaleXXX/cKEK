@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <sha.h>
 #include "base.h"
 
@@ -157,7 +158,22 @@ namespace Kek
 
         void decrypt(std::ostream& output_stream, std::istream& input_stream) const override
         {
-
+            uint8_t algorithm_version;
+            input_stream.read(reinterpret_cast<char*>(&algorithm_version), sizeof(ALGORITHM_VERSION));
+            if (algorithm_version != ALGORITHM_VERSION)
+                throw std::exception();
+            std::array<uint8_t, KEY_ID_LENGTH> encryption_key_id;
+            input_stream.read(reinterpret_cast<char*>(encryption_key_id.data()), KEY_ID_LENGTH);
+            std::vector<char> key_id;
+            std::stringstream metadata;
+            key->decrypt(metadata, input_stream);
+            std::unique_ptr<Base::SymmetricKey> symmetric_key(symmetric_key_factory.load(metadata));
+            CryptoPP::SecByteBlock iv_block(symmetric_key->get_iv_size() / 8);
+            metadata.read(reinterpret_cast<char*>(iv_block.data()), iv_block.size());
+            if (metadata.gcount() != iv_block.size())
+                throw std::exception();
+            std::vector<uint8_t> iv(iv_block.begin(), iv_block.end());
+            symmetric_key->decrypt(output_stream, input_stream, &iv);
         }
 
         void sign(std::ostream& output_stream, std::istream& input_stream) const
