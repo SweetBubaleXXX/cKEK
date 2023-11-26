@@ -37,14 +37,13 @@ namespace Rsa {
         {
             CryptoPP::AutoSeededRandomPool rng;
             CryptoPP::RSAES_OAEP_SHA_Encryptor encryptor(key);
-            CryptoPP::PK_EncryptorFilter filter(rng, encryptor,
+            CryptoPP::PK_EncryptorFilter encryption_filter(rng, encryptor,
                 new CryptoPP::FileSink(output_stream)
             );
             CryptoPP::FileSource stream(input_stream, false);
-            stream.Attach(new CryptoPP::Redirector(filter));
+            stream.Attach(new CryptoPP::Redirector(encryption_filter));
             stream.Pump(get_key_size() / 8);
-            filter.Flush(false);
-            filter.MessageEnd();
+            encryption_filter.MessageEnd();
         }
 
         bool verify(std::istream& signature, std::istream& message) const override
@@ -127,14 +126,13 @@ namespace Rsa {
         {
             CryptoPP::AutoSeededRandomPool rng;
             CryptoPP::RSAES_OAEP_SHA_Decryptor decryptor(key);
-            CryptoPP::PK_DecryptorFilter filter(rng, decryptor,
+            CryptoPP::PK_DecryptorFilter decrypiton_filter(rng, decryptor,
                 new CryptoPP::FileSink(output_stream)
             );
             CryptoPP::FileSource stream(input_stream, false);
-            stream.Attach(new CryptoPP::Redirector(filter));
+            stream.Attach(new CryptoPP::Redirector(decrypiton_filter));
             stream.Pump(get_key_size() / 8);
-            filter.Flush(false);
-            filter.MessageEnd();
+            decrypiton_filter.MessageEnd();
         }
 
         void sign(std::ostream& output_stream, std::istream& input_stream) const override

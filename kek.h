@@ -65,15 +65,11 @@ namespace Kek
             output_stream.write(reinterpret_cast<const char*>(&ALGORITHM_VERSION), sizeof(ALGORITHM_VERSION));
             get_key_id(output_stream);
             std::unique_ptr<Base::SymmetricKey> symmetric_key(symmetric_key_factory.generate());
-            CryptoPP::AutoSeededRandomPool rng;
-            CryptoPP::SecByteBlock iv_block(symmetric_key->get_iv_size() / 8);
-            rng.GenerateBlock(iv_block, iv_block.size());
-            std::vector<std::uint8_t> iv(iv_block.begin(), iv_block.end());
+            std::unique_ptr<std::vector<uint8_t>> iv = generate_iv(symmetric_key->get_iv_size() / 8);
             std::stringstream metadata;
-            symmetric_key->serialize(metadata);
-            metadata.write(reinterpret_cast<const char*>(iv.data()), iv.size());
+            write_metadata(metadata, symmetric_key.get(), *iv);
             key->encrypt(output_stream, metadata);
-            symmetric_key->encrypt(output_stream, input_stream, &iv);
+            symmetric_key->encrypt(output_stream, input_stream, iv.get());
         }
 
         bool verify(std::istream& signature, std::istream& message) const override
@@ -101,6 +97,25 @@ namespace Kek
                 )
             );
             digest.read(buffer, buffer_size);
+        }
+
+        std::unique_ptr<std::vector<uint8_t>> generate_iv(unsigned int size) const
+        {
+            CryptoPP::AutoSeededRandomPool rng;
+            CryptoPP::SecByteBlock iv_block(size);
+            rng.GenerateBlock(iv_block, iv_block.size());
+            std::vector<uint8_t>* iv = new std::vector<uint8_t>(iv_block.begin(), iv_block.end());
+            return std::make_unique<std::vector<uint8_t>>(*iv);
+        }
+
+        void write_metadata(
+            std::ostream& metadata,
+            const Base::SymmetricKey* key,
+            const std::vector<std::uint8_t>& iv
+        ) const
+        {
+            key->serialize(metadata);
+            metadata.write(reinterpret_cast<const char*>(iv.data()), iv.size());
         }
     };
 
@@ -158,22 +173,13 @@ namespace Kek
 
         void decrypt(std::ostream& output_stream, std::istream& input_stream) const override
         {
-            uint8_t algorithm_version;
-            input_stream.read(reinterpret_cast<char*>(&algorithm_version), sizeof(ALGORITHM_VERSION));
-            if (algorithm_version != ALGORITHM_VERSION)
-                throw std::exception();
-            std::array<uint8_t, KEY_ID_LENGTH> encryption_key_id;
-            input_stream.read(reinterpret_cast<char*>(encryption_key_id.data()), KEY_ID_LENGTH);
-            std::vector<char> key_id;
+            parse_algorithm_version(input_stream);
+            parse_key_id(input_stream);
             std::stringstream metadata;
             key->decrypt(metadata, input_stream);
             std::unique_ptr<Base::SymmetricKey> symmetric_key(symmetric_key_factory.load(metadata));
-            CryptoPP::SecByteBlock iv_block(symmetric_key->get_iv_size() / 8);
-            metadata.read(reinterpret_cast<char*>(iv_block.data()), iv_block.size());
-            if (metadata.gcount() != iv_block.size())
-                throw std::exception();
-            std::vector<uint8_t> iv(iv_block.begin(), iv_block.end());
-            symmetric_key->decrypt(output_stream, input_stream, &iv);
+            std::unique_ptr<std::vector<uint8_t>> iv = parse_iv(metadata, symmetric_key->get_iv_size() / 8);
+            symmetric_key->decrypt(output_stream, input_stream, iv.get());
         }
 
         void sign(std::ostream& output_stream, std::istream& input_stream) const
@@ -186,6 +192,35 @@ namespace Kek
         std::unique_ptr<Base::PrivateKey> key;
 
         PrivateKey(Base::PrivateKey* private_key) : key(private_key) {}
+
+        void parse_algorithm_version(std::istream& input_stream) const
+        {
+            uint8_t algorithm_version;
+            input_stream.read(reinterpret_cast<char*>(&algorithm_version), sizeof(ALGORITHM_VERSION));
+            if (algorithm_version != ALGORITHM_VERSION)
+                throw std::exception();
+        }
+
+        void parse_key_id(std::istream& input_stream) const
+        {
+            std::array<uint8_t, KEY_ID_LENGTH> encryption_key_id, current_key_id;
+            input_stream.read(reinterpret_cast<char*>(encryption_key_id.data()), encryption_key_id.size());
+            std::stringstream serialized_key_id;
+            get_key_id(serialized_key_id);
+            serialized_key_id.read(reinterpret_cast<char*>(current_key_id.data()), current_key_id.size());
+            if (encryption_key_id != current_key_id)
+                throw std::exception();
+        }
+
+        std::unique_ptr<std::vector<uint8_t>> parse_iv(std::istream& metadata, unsigned int iv_size) const
+        {
+            CryptoPP::SecByteBlock iv_block(iv_size);
+            metadata.read(reinterpret_cast<char*>(iv_block.data()), iv_block.size());
+            if (metadata.gcount() != iv_block.size())
+                throw std::exception();
+            std::vector<uint8_t>* iv = new std::vector<uint8_t>(iv_block.begin(), iv_block.end());
+            return std::make_unique<std::vector<uint8_t>>(*iv);
+        }
     };
 
     template <class TAsymmetricKeyFactory, class TSymmetricKeyFactory>

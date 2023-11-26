@@ -146,6 +146,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="aes.h" />
     <ClInclude Include="base.h" />
     <ClInclude Include="kek.h" />
     <ClInclude Include="rsa.h" />

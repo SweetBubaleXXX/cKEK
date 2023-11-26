@@ -29,5 +29,8 @@
     <ClInclude Include="kek.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
