@@ -143,11 +143,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="context.h" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aes.h" />
     <ClInclude Include="base.h" />
+    <ClInclude Include="CLI11.hpp" />
+    <ClInclude Include="commands.h" />
     <ClInclude Include="kek.h" />
     <ClInclude Include="rsa.h" />
   </ItemGroup>

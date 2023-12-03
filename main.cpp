@@ -2,58 +2,54 @@
 #include <iomanip>
 #include <vector>
 #include <filters.h>
+#include "CLI11.hpp"
 #include "aes.h"
 #include "base.h"
+#include "context.h"
 #include "rsa.h"
 #include "kek.h"
 
 int main(int argc, char* argv[])
 {
-    std::unique_ptr<Rsa::PrivateKey> private_key(Rsa::PrivateKey::generate(2048));
-    private_key->serialize(std::cout);
-    std::unique_ptr<Base::PublicKey> public_key(private_key->get_public_key());
-    public_key->serialize(std::cout);
-    std::string message("Message text");
-    std::stringstream content(message);
-    std::stringstream encrypted_message;
-    public_key->encrypt(encrypted_message, content);
-    private_key->decrypt(std::cout, encrypted_message);
+    AppContext context;
 
-    Rsa::KeyFactory factory;
-    Rsa::PrivateKey* new_key = factory.generate_private_key(2048);
-    std::cout << new_key->get_key_size() << std::endl;
-    delete new_key;
+    CLI::App app("KEK");
+    app.require_subcommand(1);
 
-    std::stringstream plain_text(message);
-    std::stringstream cipher;
+    auto generate_sub_app = app.add_subcommand("generate", "generate private key");
+    generate_sub_app->add_option("OUTPUT_FILE", context.output_file)->required();
+    generate_sub_app->add_option("-s,--size", context.key_size);
+    generate_sub_app->add_option("--seed", context.seed_file, "file with seed")->check(CLI::ExistingFile);
+    generate_sub_app->add_option("-p,--password-file", context.password_file)->check(CLI::ExistingFile);
 
-    std::unique_ptr<Aes::CbcModeKey> key(Aes::CbcModeKey::generate());
-    std::cout << key->get_key_size() << std::endl;
-    std::vector<uint8_t> iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    auto export_public_key_sub_app = app.add_subcommand("export-public-key");
+    export_public_key_sub_app->add_option("OUTPUT_FILE", context.output_file)->required();
+    export_public_key_sub_app->add_option("-k,--key", context.key_file, "file with private key")->required();
+    export_public_key_sub_app->add_option("-p,--password-file", context.password_file)->check(CLI::ExistingFile);
 
-    key->encrypt(cipher, plain_text, &iv);
-    key->decrypt(std::cout, cipher, &iv);
+    auto encrypt_sub_app = app.add_subcommand("encrypt", "encrypt file");
+    encrypt_sub_app->add_option("INPUT_FILE", context.input_file)->check(CLI::ExistingFile)->required();
+    encrypt_sub_app->add_option("OUTPUT_FILE", context.output_file)->required();
+    encrypt_sub_app->add_option("-k,--key", context.key_file, "file with public key")->required();
 
-    Kek::KeyFactory<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>> kek_factory;
-    std::unique_ptr<Base::PrivateKey> kek_key(kek_factory.generate_private_key(1024));
-    kek_key->serialize(std::cout, message);
-    Kek::PrivateKey<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>>* kek_private = kek_factory.generate_private_key(1024);
-    Kek::PublicKey<Rsa::KeyFactory, Aes::CbcModeKeyFactory<>>* kek_public = kek_private->get_public_key();
-    kek_public->serialize(std::cout);
-    std::stringstream key_id;
-    std::cout << kek_private->get_key_id() << std::endl;
-    std::string hex_id = kek_public->get_key_id();
-    std::cout << hex_id << std::endl;
-    std::stringstream text(std::string("Simple message"));
-    std::stringstream output;
-    kek_public->encrypt(output, text);
-    for (char byte : output.str())
-    {
-        std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(byte));
-    }
-    output.clear();
-    output.seekg(0, std::ios::beg);
-    std::cout << std::endl;
-    kek_private->decrypt(std::cout, output);
+    auto decrypt_sub_app = app.add_subcommand("decrypt", "decrypt file");
+    decrypt_sub_app->add_option("INPUT_FILE", context.input_file)->check(CLI::ExistingFile)->required();
+    decrypt_sub_app->add_option("OUTPUT_FILE", context.output_file)->required();
+    decrypt_sub_app->add_option("-k,--key", context.key_file, "file with private key")->required();
+    decrypt_sub_app->add_option("-p,--password-file", context.password_file)->check(CLI::ExistingFile);
+
+    auto sign_sub_app = app.add_subcommand("sign", "create signature");
+    sign_sub_app->add_option("INPUT_FILE", context.input_file)->check(CLI::ExistingFile)->required();
+    sign_sub_app->add_option("OUTPUT_FILE", context.output_file)->required();
+    sign_sub_app->add_option("-k,--key", context.key_file, "file with private key")->required();
+    sign_sub_app->add_option("-p,--password-file", context.password_file)->check(CLI::ExistingFile);
+
+    auto verify_sub_app = app.add_subcommand("verify", "verify signature");
+    verify_sub_app->add_option("INPUT_FILE", context.input_file)->check(CLI::ExistingFile)->required();
+    verify_sub_app->add_option("SINGATURE_FILE", context.signature_file)->check(CLI::ExistingFile)->required();
+    verify_sub_app->add_option("-k,--key", context.key_file, "file with public key")->required();
+
+    CLI11_PARSE(app, argc, argv);
+
     return 0;
 }
