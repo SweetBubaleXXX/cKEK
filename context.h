@@ -4,7 +4,7 @@
 
 struct AppContext
 {
-    int key_size = 2048;
+    unsigned int key_size = 2048;
     std::string key_file;
     std::string output_file;
     std::string input_file;

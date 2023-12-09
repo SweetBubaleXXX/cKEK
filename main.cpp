@@ -1,17 +1,13 @@
+#include <csignal>
 #include <iostream>
-#include <iomanip>
-#include <vector>
-#include <filters.h>
 #include "CLI11.hpp"
-#include "aes.h"
-#include "base.h"
 #include "context.h"
-#include "rsa.h"
-#include "kek.h"
+#include "commands.h"
 
 int main(int argc, char* argv[])
 {
     AppContext context;
+    CommandExecutor executor(context);
 
     CLI::App app("KEK");
     app.require_subcommand(1);
@@ -21,6 +17,7 @@ int main(int argc, char* argv[])
     generate_sub_app->add_option("-s,--size", context.key_size);
     generate_sub_app->add_option("--seed", context.seed_file, "file with seed")->check(CLI::ExistingFile);
     generate_sub_app->add_option("-p,--password-file", context.password_file)->check(CLI::ExistingFile);
+    generate_sub_app->callback(std::bind(&CommandExecutor::generate_key, &executor));
 
     auto export_public_key_sub_app = app.add_subcommand("export-public-key");
     export_public_key_sub_app->add_option("OUTPUT_FILE", context.output_file)->required();
@@ -49,7 +46,14 @@ int main(int argc, char* argv[])
     verify_sub_app->add_option("SINGATURE_FILE", context.signature_file)->check(CLI::ExistingFile)->required();
     verify_sub_app->add_option("-k,--key", context.key_file, "file with public key")->required();
 
-    CLI11_PARSE(app, argc, argv);
+    try
+    {
+        CLI11_PARSE(app, argc, argv);
+    }
+    catch (std::exception& exc)
+    {
+        std::cerr << exc.what();
+    }
 
     return 0;
 }

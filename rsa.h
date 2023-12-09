@@ -10,6 +10,7 @@
 
 namespace Rsa {
     const std::string KEY_ENCRYPTION_ALGORITHM = "AES-256-CBC";
+    const unsigned int SEED_SIZE = CryptoPP::AES::BLOCKSIZE;
 
     class PublicKey : virtual public Base::PublicKey
     {
@@ -91,8 +92,8 @@ namespace Rsa {
 
         static PrivateKey* generate(unsigned int key_size, const std::vector<uint8_t>& seed)
         {
-            if (seed.size() != CryptoPP::AES::BLOCKSIZE)
-                throw std::runtime_error("Invalid seed size");
+            if (seed.size() != SEED_SIZE)
+                throw std::exception("Invalid seed size");
             CryptoPP::OFB_Mode<CryptoPP::AES>::Encryption rng;
             rng.SetKeyWithIV(seed.data(), seed.size(), seed.data(), seed.size());
             return PrivateKey::generate(rng, key_size);
