@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <sha.h>
 #include "base.h"
 
 #define CHECK_TEMPLATE_CLASSES static_assert(\
@@ -65,7 +64,7 @@ namespace Kek
             output_stream.write(reinterpret_cast<const char*>(&ALGORITHM_VERSION), sizeof(ALGORITHM_VERSION));
             get_key_id(output_stream);
             std::unique_ptr<Base::SymmetricKey> symmetric_key(symmetric_key_factory.generate());
-            std::unique_ptr<std::vector<uint8_t>> iv = generate_iv(symmetric_key->get_iv_size() / 8);
+            auto iv = generate_iv(symmetric_key->get_iv_size() / 8);
             std::stringstream metadata;
             write_metadata(metadata, symmetric_key.get(), *iv);
             key->encrypt(output_stream, metadata);
@@ -135,7 +134,7 @@ namespace Kek
         static PrivateKey* generate(unsigned int key_size, const std::vector<uint8_t>* seed = nullptr)
         {
             TAsymmetricKeyFactory key_factory;
-            Base::PrivateKey* private_key = key_factory.generate_private_key(key_size, seed);
+            auto private_key = key_factory.generate_private_key(key_size, seed);
             return new PrivateKey(private_key);
         }
 
@@ -178,7 +177,7 @@ namespace Kek
             std::stringstream metadata;
             key->decrypt(metadata, input_stream);
             std::unique_ptr<Base::SymmetricKey> symmetric_key(symmetric_key_factory.load(metadata));
-            std::unique_ptr<std::vector<uint8_t>> iv = parse_iv(metadata, symmetric_key->get_iv_size() / 8);
+            auto iv = parse_iv(metadata, symmetric_key->get_iv_size() / 8);
             symmetric_key->decrypt(output_stream, input_stream, iv.get());
         }
 
@@ -218,7 +217,7 @@ namespace Kek
             metadata.read(reinterpret_cast<char*>(iv_block.data()), iv_block.size());
             if (metadata.gcount() != iv_block.size())
                 throw std::exception();
-            std::vector<uint8_t>* iv = new std::vector<uint8_t>(iv_block.begin(), iv_block.end());
+            auto iv = new std::vector<uint8_t>(iv_block.begin(), iv_block.end());
             return std::make_unique<std::vector<uint8_t>>(*iv);
         }
     };

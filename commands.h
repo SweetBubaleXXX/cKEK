@@ -1,7 +1,6 @@
 #pragma once
 
 #include <conio.h>
-#include <filters.h>
 #include "base.h"
 #include "rsa.h"
 #include "aes.h"
