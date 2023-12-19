@@ -198,7 +198,7 @@ namespace Kek
             uint8_t algorithm_version;
             input_stream.read(reinterpret_cast<char*>(&algorithm_version), sizeof(ALGORITHM_VERSION));
             if (algorithm_version != ALGORITHM_VERSION)
-                throw std::exception();
+                throw std::exception("Incompatible algorithm version");
         }
 
         void parse_key_id(std::istream& input_stream) const
@@ -209,7 +209,7 @@ namespace Kek
             get_key_id(serialized_key_id);
             serialized_key_id.read(reinterpret_cast<char*>(current_key_id.data()), current_key_id.size());
             if (encryption_key_id != current_key_id)
-                throw std::exception();
+                throw std::exception("Data was encrypted with key that has different id");
         }
 
         std::unique_ptr<std::vector<uint8_t>> parse_iv(std::istream& metadata, unsigned int iv_size) const
